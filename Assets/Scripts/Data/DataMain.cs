@@ -17,22 +17,31 @@ namespace Koapower.KoafishTwitchBot.Data
         public Secret secret = new Secret();
         public Settings settings = new Settings();
 
-        public async UniTask LoadAll()
+        public async UniTask LoadAll() //todo 這邊的load的流程還可以再調整
         {
+            ensureSaveFolderExists();
+
             //secret比較特別要玩家另外從記事本輸入
             var path = Path.Combine(SaveFolder, "secrets.json");
             if (!File.Exists(path))
             {
                 Save(secret, path);
-                await Main.UIManager.OpenMessageBoxAsync(UI.MessageBox.MessageBoxType.OK, $"因為這些設定比較私人，請用記事本打開後輸入bot相關的資訊並儲存");
                 Application.OpenURL(path);
-                await Main.UIManager.OpenMessageBoxAsync(UI.MessageBox.MessageBoxType.OK, $"請確認已輸入bot相關的資訊並儲存，好了再按OK");
+                await Main.UIManager.OpenMessageBoxAsync(UI.MessageBox.MessageBoxType.OK, $"Please edit the secret file by any text editor and save it manually. After editing, press ok to continue.");
             }
-            Save(secret, path);
+            secret = Load<Secret>(path);
+            if(secret == null)
+            {
+                await Main.UIManager.OpenMessageBoxAsync(UI.MessageBox.MessageBoxType.OK, $"Secret file does not exist!");
+                Application.Quit();
+                return;
+            }
 
             //settings
             path = Path.Combine(SaveFolder, "settings.json");
-            Load(settings, path);
+            var loadedSettings = Load<Settings>(path);
+            if (loadedSettings != null)
+                settings = loadedSettings;
             while (string.IsNullOrEmpty(settings.channel_name))
             {
                 Debug.LogWarning("Channel name should not be empty! please fill in");
@@ -48,6 +57,8 @@ namespace Koapower.KoafishTwitchBot.Data
                 else
                     Save(settings, path);
             }
+
+            Debug.Log("Data loaded");
         }
 
         public void SaveAll()
@@ -55,14 +66,20 @@ namespace Koapower.KoafishTwitchBot.Data
 
         }
 
-        private void Load<T>(T data, string path)
+        private void ensureSaveFolderExists()
+        {
+            Directory.CreateDirectory(SaveFolder);
+        }
+
+        private T Load<T>(string path) where T : class
         {
             if (!File.Exists(path))
-            {
-                Save(data, path);
-            }
+                return null;
+
             var raw = File.ReadAllText(path);
-            data = JsonUtility.FromJson<T>(raw);
+            var data = JsonUtility.FromJson<T>(raw);
+
+            return data;
         }
 
         private void Save<T>(T data, string path)

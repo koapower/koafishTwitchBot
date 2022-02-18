@@ -10,31 +10,33 @@ namespace Koapower.KoafishTwitchBot
     {
         private static System.Text.StringBuilder sb = new System.Text.StringBuilder();
         public Client client;
-        private string channel_name = "koapower";
 
         public void Initialize()
         {
             ConnectionCredentials credentials = new ConnectionCredentials("koafishbot", Main.Datas.secret.bot_access_token);
             client = new Client();
-            client.Initialize(credentials, channel_name);
+            client.Initialize(credentials, Main.Datas.settings.channel_name);
 
             //subscribe events here
             client.OnMessageReceived += OnMessageReceived;
             client.OnConnected += OnConnected;
             client.OnConnectionError += OnConnectionError;
             client.OnJoinedChannel += OnJoinedChannel;
+
+            Debug.Log("Twitch client initialized");
         }
 
         public void Connect()
         {
             client.Connect();
+            Debug.Log("Twitch client connect");
         }
 
         internal void Update(float deltaTime)
         {
             if (Input.GetKeyDown(KeyCode.F1))
             {
-                client.SendMessage(channel_name, "帽子給我好嗎~");
+                client.SendMessage(Main.Datas.settings.channel_name, "帽子給我好嗎~");
             }
             else if (Input.GetKeyDown(KeyCode.F2))
             {

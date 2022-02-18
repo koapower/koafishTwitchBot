@@ -19,9 +19,12 @@ namespace Koapower.KoafishTwitchBot.UI.InputBox
 
         public void Open(Request req)
         {
+            contentPool ??= new ObjectPool<ContentBox>(() => GameObject.Instantiate(contentPrefab, contentPrefab.transform.parent));
             if (req != null)
             {
                 ResetUI();
+                currentRequest = req;
+                gameObject.SetActive(true);
 
                 this.title.text = req.title;
                 foreach (var r in req.reqs)
@@ -29,6 +32,7 @@ namespace Koapower.KoafishTwitchBot.UI.InputBox
                     var c = contentPool.Get();
                     c.Setup(r);
                     c.gameObject.SetActive(true);
+                    contents.Add(c);
                 }
 
                 cancelButton.gameObject.SetActive(false);
@@ -45,6 +49,8 @@ namespace Koapower.KoafishTwitchBot.UI.InputBox
                     default:
                         break;
                 }
+
+                transform.SetAsLastSibling();
             }
         }
 
@@ -67,7 +73,7 @@ namespace Koapower.KoafishTwitchBot.UI.InputBox
 
         private void Awake()
         {
-            contentPool = new ObjectPool<ContentBox>(() => GameObject.Instantiate(contentPrefab, contentPrefab.transform.parent));
+            contentPool ??= new ObjectPool<ContentBox>(() => GameObject.Instantiate(contentPrefab, contentPrefab.transform.parent));
             contentPrefab.gameObject.SetActive(false);
             cancelButton.onClick.AddListener(OnCancel);
             okButton.onClick.AddListener(OnOk);

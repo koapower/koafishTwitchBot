@@ -13,6 +13,8 @@ namespace Koapower.KoafishTwitchBot.UI.InputBox
 
         public void Setup(InputRequest req)
         {
+            request = req;
+
             this.title.text = req.title;
             inputField.gameObject.SetActive(false);
             toggle.gameObject.SetActive(false);

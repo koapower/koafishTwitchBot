@@ -17,6 +17,25 @@ namespace Koapower.KoafishTwitchBot.UI.MessageBox
                 currentRequest = req;
                 gameObject.SetActive(true);
                 text.text = req.message;
+
+                cancelButton.gameObject.SetActive(false);
+                okButton.gameObject.SetActive(false);
+                switch (req.type)
+                {
+                    case MessageBoxType.OKCANCEL:
+                        cancelButton.gameObject.SetActive(true);
+                        okButton.gameObject.SetActive(true);
+                        break;
+                    case MessageBoxType.OK:
+                        okButton.gameObject.SetActive(true);
+                        break;
+                    case MessageBoxType.Block:
+                        break;
+                    default:
+                        break;
+                }
+
+                transform.SetAsLastSibling();
             }
         }
 
