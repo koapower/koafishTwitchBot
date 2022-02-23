@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Koapower.KoafishTwitchBot.Data
 {
@@ -10,5 +6,8 @@ namespace Koapower.KoafishTwitchBot.Data
     public class Settings
     {
         public string channel_name = "";
+        public string downloadPath = "";
+
+        public string commandPrefix = "!";
     }
 }

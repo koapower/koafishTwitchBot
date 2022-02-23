@@ -8,7 +8,6 @@ namespace Koapower.KoafishTwitchBot
 {
     public class TwitchClient
     {
-        private static System.Text.StringBuilder sb = new System.Text.StringBuilder();
         public Client client;
 
         public void Initialize()
@@ -18,7 +17,7 @@ namespace Koapower.KoafishTwitchBot
             client.Initialize(credentials, Main.Datas.settings.channel_name);
 
             //subscribe events here
-            client.OnMessageReceived += OnMessageReceived;
+            client.OnMessageReceived += Main.Modules.messageManager.OnMessageReceived;
             client.OnConnected += OnConnected;
             client.OnConnectionError += OnConnectionError;
             client.OnJoinedChannel += OnJoinedChannel;
@@ -32,6 +31,11 @@ namespace Koapower.KoafishTwitchBot
             Debug.Log("Twitch client connect");
         }
 
+        public void SendMessage(string channelName, string message)
+        {
+            client.SendMessage(channelName, message);
+        }
+
         internal void Update(float deltaTime)
         {
             if (Input.GetKeyDown(KeyCode.F1))
@@ -40,44 +44,15 @@ namespace Koapower.KoafishTwitchBot
             }
             else if (Input.GetKeyDown(KeyCode.F2))
             {
+                var currentBeatmap = Main.Modules.osuDataProvider.ReadCurrentBeatmap();
+                if (currentBeatmap != null)
+                    Debug.Log(JsonUtility.ToJson(currentBeatmap));
+                else
+                    Debug.Log("current beatmap is null");
             }
         }
 
         #region callbacks
-        private async void OnMessageReceived(object sender, TwitchLib.Client.Events.OnMessageReceivedArgs e)
-        {
-            var message = e.ChatMessage.Message;
-            //Debug.Log($"{e.ChatMessage.UserId}: {message}");
-
-            //check if it is an osu beatmap
-            var matches = OsuHandler.osuBeatmapUrl.Matches(message);
-            //Debug.Log($"matchcount: {matches.Count}");
-            for (int i = 0; i < matches.Count; i++)
-            {
-                var mapInfo = await Main.Modules.osuHandler.AddBeatmapToQueue(matches[i].Value);
-                var set = mapInfo.Item1;
-                var map = mapInfo.Item2;
-                sb.Clear();
-                sb.Append("[Request by ").Append(e.ChatMessage.Username).Append("] ");
-                if (set != null)
-                {
-                    sb.Append(set.ArtistUnicode).Append(" - ").Append(set.TitleUnicode);
-                    if (map != null)
-                    {
-                        sb.Append(" [").Append(map.Name).Append("] ★").Append(map.DifficultyRating).Append(" ").Append(map.TotalLength.ToString());
-                    }
-                    sb.Append(" by ").Append(set.Mapper);
-                }
-                else
-                {
-                    sb.Append("找不到這張圖");
-                }
-
-                client.SendMessage(e.ChatMessage.Channel, sb.ToString());
-            }
-
-        }
-
         private void OnConnected(object sender, TwitchLib.Client.Events.OnConnectedArgs e)
         {
             Debug.Log($"Connected to {e.AutoJoinChannel}");

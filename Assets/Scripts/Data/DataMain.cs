@@ -12,6 +12,7 @@ namespace Koapower.KoafishTwitchBot.Data
     public class DataMain
     {
         public static string SaveFolder => Path.Combine(Application.dataPath, "Saves");
+        public static string DownloadFolder => Path.Combine(Application.dataPath, "Download");
 
         //todo tables
         public Secret secret = new Secret();
@@ -21,21 +22,33 @@ namespace Koapower.KoafishTwitchBot.Data
         {
             ensureSaveFolderExists();
 
-            //secret比較特別要玩家另外從記事本輸入
+            //secret
             var path = Path.Combine(SaveFolder, "secrets.json");
-            if (!File.Exists(path))
+            var loadedSecret = Load<Secret>(path);
+            if (loadedSecret == null)
             {
+                var inputReqs = new List<UI.InputBox.InputRequest>()
+                {
+                    new UI.InputBox.InputRequest("Twitch bot client id", UI.InputBox.ContentType.TextField, false),
+                    new UI.InputBox.InputRequest("Twitch bot client secret", UI.InputBox.ContentType.TextField, false),
+                    new UI.InputBox.InputRequest("Bot access token", UI.InputBox.ContentType.TextField, false),
+                    new UI.InputBox.InputRequest("Bot refresh token", UI.InputBox.ContentType.TextField, false),
+                    new UI.InputBox.InputRequest("Osu app client id", UI.InputBox.ContentType.TextField, false),
+                    new UI.InputBox.InputRequest("Osu app client secret", UI.InputBox.ContentType.TextField, false),
+                };
+                await Main.UIManager.OpenInputBoxAsync(UI.InputBox.InputBoxType.OK, "Secrets", inputReqs);
+
+                secret.client_id = inputReqs[0].stringResult;
+                secret.client_secret = inputReqs[1].stringResult;
+                secret.bot_access_token = inputReqs[2].stringResult;
+                secret.bot_refresh_token = inputReqs[3].stringResult;
+                secret.osu_app_client_id = inputReqs[4].stringResult;
+                secret.osu_app_client_secret = inputReqs[5].stringResult;
+
                 Save(secret, path);
-                Application.OpenURL(path);
-                await Main.UIManager.OpenMessageBoxAsync(UI.MessageBox.MessageBoxType.OK, $"Please edit the secret file by any text editor and save it manually. After editing, press ok to continue.");
             }
-            secret = Load<Secret>(path);
-            if(secret == null)
-            {
-                await Main.UIManager.OpenMessageBoxAsync(UI.MessageBox.MessageBoxType.OK, $"Secret file does not exist!");
-                Application.Quit();
-                return;
-            }
+            else
+                secret = loadedSecret;
 
             //settings
             path = Path.Combine(SaveFolder, "settings.json");
@@ -56,6 +69,11 @@ namespace Koapower.KoafishTwitchBot.Data
                     await Main.UIManager.OpenMessageBoxAsync(UI.MessageBox.MessageBoxType.OK, $"Twitch channel name is still empty, please fill in.");
                 else
                     Save(settings, path);
+            }
+            if (string.IsNullOrEmpty(settings.downloadPath))
+            {
+                settings.downloadPath = DownloadFolder;
+                Save(settings, path);
             }
 
             Debug.Log("Data loaded");

@@ -5,12 +5,46 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using OsuBeatmapset = Koapower.KoafishTwitchBot.Module.OsuWebApi.OsuBeatmapset;
 
-namespace Koapower.KoafishTwitchBot.Module
+namespace Koapower.KoafishTwitchBot.Module.Message
 {
-    public class OsuHandler
+    class OsuHandler : MessageHandler
     {
         public readonly static Regex osuBeatmapUrl = new Regex("[http(s)*://]*osu.ppy.sh/beatmapsets/[0-9]+[(osu|#taiko|#fruits|#mania)/[0-9]+]*");
         private readonly static Regex numberParse = new Regex("[0-9]+");
+
+        internal async override UniTask OnMessageRecieved(TwitchLib.Client.Events.OnMessageReceivedArgs e)
+        {
+            var message = e.ChatMessage.Message;
+            //Debug.Log($"{e.ChatMessage.UserId}: {message}");
+
+            //check if it is an osu beatmap
+            var matches = osuBeatmapUrl.Matches(message);
+            //Debug.Log($"matchcount: {matches.Count}");
+            for (int i = 0; i < matches.Count; i++)
+            {
+                var mapInfo = await AddBeatmapToQueue(matches[i].Value);
+                var set = mapInfo.Item1;
+                var map = mapInfo.Item2;
+                sb.Clear();
+                sb.Append("[Request by ").Append(e.ChatMessage.Username).Append("] ");
+                if (set != null)
+                {
+                    sb.Append(set.ArtistUnicode).Append(" - ").Append(set.TitleUnicode);
+                    if (map != null)
+                    {
+                        sb.Append(" [").Append(map.Name).Append("] ★").Append(map.DifficultyRating).Append(" ").Append(map.TotalLength.ToString(@"mm\:ss"));
+                    }
+                    sb.Append(" by ").Append(set.Mapper);
+                }
+                else
+                {
+                    sb.Append("找不到這張圖");
+                }
+
+                Main.Client.SendMessage(e.ChatMessage.Channel, sb.ToString());
+            }
+        }
+
         public async UniTask<(OsuBeatmapset, OsuBeatmap)> AddBeatmapToQueue(string url)
         {
             var matches = numberParse.Matches(url);

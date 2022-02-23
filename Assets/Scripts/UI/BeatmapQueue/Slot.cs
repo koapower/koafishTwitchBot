@@ -12,7 +12,6 @@ namespace Koapower.KoafishTwitchBot.UI.BeatmapQueue
 {
     class Slot : MonoBehaviour
     {
-        private static string saveFolder = "Z:\\下載";
         public Image bg;
         public Image progressFill;
         public Image successFill;
@@ -38,7 +37,7 @@ namespace Koapower.KoafishTwitchBot.UI.BeatmapQueue
             this.mapQ = Q;
             this.mapset = mapset;
             this.map = map;
-            this.savePath = Path.Combine(saveFolder, $"{mapset.Id}_autodl.osz");
+            this.savePath = Path.Combine(Main.Datas.settings.downloadPath, $"{mapset.Id}_autodl.osz");
 
 
             artist.text = mapset.Artist;
