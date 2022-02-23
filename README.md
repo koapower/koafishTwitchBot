@@ -8,6 +8,6 @@ made in unity version 2020.3.12f1
 - !np
 
 ## lib used
-[TwitchLib.Unity](https://github.com/TwitchLib/TwitchLib.Unity)
-[Orbit (API)](https://github.com/dragonfruitnetwork/orbit-api)
-[ProcessMemoryDataFinder](https://github.com/Piotrekol/ProcessMemoryDataFinder)
+* [TwitchLib.Unity](https://github.com/TwitchLib/TwitchLib.Unity)
+* [Orbit (API)](https://github.com/dragonfruitnetwork/orbit-api)
+* [ProcessMemoryDataFinder](https://github.com/Piotrekol/ProcessMemoryDataFinder)
