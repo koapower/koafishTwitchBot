@@ -31,10 +31,9 @@ namespace Koapower.KoafishTwitchBot.Module.Message
                 {
                     sb.Append(set.ArtistUnicode).Append(" - ").Append(set.TitleUnicode);
                     if (map != null)
-                    {
-                        sb.Append(" [").Append(map.Name).Append("] ★").Append(map.DifficultyRating).Append(" ").Append(map.TotalLength.ToString(@"mm\:ss"));
-                    }
-                    sb.Append(" by ").Append(set.Mapper);
+                        sb.Append(" [").Append(map.Name).Append("] by ").Append(set.Mapper).Append(" ★").Append(map.DifficultyRating).Append(" ").Append(map.TotalLength.ToString(@"mm\:ss"));
+                    else
+                        sb.Append(" by ").Append(set.Mapper);
                 }
                 else
                 {
