@@ -20,5 +20,20 @@ namespace Koapower.KoafishTwitchBot.Module.OsuWebApi
 
             return client.PerformAsync<OsuBeatmapset>(request);
         }
+
+        /// <summary>
+        /// Get a beatmapset's metadata/info from a child map's id
+        /// </summary>
+        /// <param name="client">The <see cref="OrbitClient"/> to use</param>
+        /// <param name="childMapId">The id of a map in the set</param>
+        public static Task<OsuBeatmapset> GetBeatmapsetFromMap_fix(this OrbitClient client, uint childMapId)
+        {
+            var request = new OsuBeatmapsetRequest
+            {
+                ChildMapId = childMapId
+            };
+
+            return client.PerformAsync<OsuBeatmapset>(request);
+        }
     }
 }

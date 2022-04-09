@@ -1,9 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Koapower.KoafishTwitchBot.Module.Message
 {
@@ -15,7 +12,7 @@ namespace Koapower.KoafishTwitchBot.Module.Message
         internal async override UniTask OnMessageRecieved(TwitchLib.Client.Events.OnMessageReceivedArgs e)
         {
             var message = e.ChatMessage.Message;
-            if (message.StartsWith(Main.Datas.settings.commandPrefix))
+            if (message.StartsWith(Main.Datas.settings.commandPrefix.value))
             {
                 var body = message.Substring(1);
                 var split = body.Split(commandSeparator);

@@ -9,7 +9,8 @@ namespace Koapower.KoafishTwitchBot.Module.Message
 {
     class OsuHandler : MessageHandler
     {
-        public readonly static Regex osuBeatmapUrl = new Regex("[http(s)*://]*osu.ppy.sh/beatmapsets/[0-9]+[(osu|#taiko|#fruits|#mania)/[0-9]+]*");
+        public readonly static Regex osuBeatmapSetUrl = new Regex("[http(s)*://]*osu.ppy.sh/(beatmapsets|s|beatmaps)/[0-9]+[(osu|#taiko|#fruits|#mania)/[0-9]+]*");
+        public readonly static Regex osuBeatmapMapUrl = new Regex("[http(s)*://]*osu.ppy.sh/b/[0-9]+");
         private readonly static Regex numberParse = new Regex("[0-9]+");
 
         internal async override UniTask OnMessageRecieved(TwitchLib.Client.Events.OnMessageReceivedArgs e)
@@ -18,37 +19,95 @@ namespace Koapower.KoafishTwitchBot.Module.Message
             //Debug.Log($"{e.ChatMessage.UserId}: {message}");
 
             //check if it is an osu beatmap
-            var matches = osuBeatmapUrl.Matches(message);
-            //Debug.Log($"matchcount: {matches.Count}");
+            var matches = osuBeatmapSetUrl.Matches(message);
             for (int i = 0; i < matches.Count; i++)
             {
-                var mapInfo = await AddBeatmapToQueue(matches[i].Value);
+                var parsed = TryParseBeatmapSetIds(matches[i].Value, out var setId, out var mapId);
+                if (!parsed) continue;
+
+                var mapInfo = await AddBeatmapToQueue(setId, mapId);
                 var set = mapInfo.Item1;
                 var map = mapInfo.Item2;
+                SendRecievedRequestMessage(set, map);
+            }
+            matches = osuBeatmapMapUrl.Matches(message);
+            for (int i = 0; i < matches.Count; i++)
+            {
+                var parsed = TryParseBeatmapMapId(matches[i].Value, out var mapId);
+                if (!parsed) continue;
+
+                var mapInfo = await AddBeatmapToQueue(0, mapId);
+                var set = mapInfo.Item1;
+                var map = mapInfo.Item2;
+                SendRecievedRequestMessage(set, map);
+            }
+
+            //sub method
+            void SendRecievedRequestMessage(OsuBeatmapset set, OsuBeatmap map)
+            {
+                string twitchMessage, osuIrcMessage;
                 sb.Clear();
-                sb.Append("[Request by ").Append(e.ChatMessage.Username).Append("] ");
+                sb.Append("[Request by ").Append(e.ChatMessage.DisplayName).Append("] ");
                 if (set != null)
                 {
+                    //twitch
                     sb.Append(set.ArtistUnicode).Append(" - ").Append(set.TitleUnicode);
                     if (map != null)
-                        sb.Append(" [").Append(map.Name).Append("] by ").Append(set.Mapper).Append(" ★").Append(map.DifficultyRating).Append(" ").Append(map.TotalLength.ToString(@"mm\:ss"));
+                        sb.Append(" [").Append(map.Name).Append("] by ").Append(set.Mapper).Append(", ★").Append(map.DifficultyRating).Append(", ").Append(map.TotalLength.ToString(@"mm\:ss"));
                     else
                         sb.Append(" by ").Append(set.Mapper);
+
+                    twitchMessage = sb.ToString();
+                    //irc
+                    sb.Clear();
+                    sb.Append(e.ChatMessage.DisplayName).Append(" > ");
+                    map ??= set.Maps.LastOrDefault();
+                    if (map != null)
+                        sb.Append("[https://osu.ppy.sh/b/").Append(map.Id).Append(' ').Append(set.ArtistUnicode).Append(" - ").Append(set.TitleUnicode)
+                            .Append(" [").Append(map.Name).Append("]] by ").Append(set.Mapper).Append(", ★").Append(map.DifficultyRating).Append(", ").Append(map.TotalLength.ToString(@"mm\:ss"));
+                    else
+                        sb.Append(set.ArtistUnicode).Append(" - ").Append(set.TitleUnicode).Append(" by ").Append(set.Mapper);
+                    osuIrcMessage = sb.ToString();
                 }
                 else
                 {
                     sb.Append("找不到這張圖");
+                    twitchMessage = sb.ToString();
+                    osuIrcMessage = null;
                 }
 
-                Main.Client.SendMessage(e.ChatMessage.Channel, sb.ToString());
+                if (!string.IsNullOrEmpty(twitchMessage))
+                    Main.Client.SendMessage(e.ChatMessage.Channel, twitchMessage);
+                if (!string.IsNullOrEmpty(osuIrcMessage))
+                    Main.Modules.osuIRCManager.SendMessageToOsuUser(osuIrcMessage);
             }
         }
 
-        public async UniTask<(OsuBeatmapset, OsuBeatmap)> AddBeatmapToQueue(string url)
+        public async UniTask<(OsuBeatmapset, OsuBeatmap)> AddBeatmapToQueue(uint setId, uint mapId)
+        {
+            OsuBeatmapset set = null;
+            OsuBeatmap map = null;
+            if (setId != 0)
+            {
+                set = await Main.Modules.osuApiClient.GetBeatmapset_fix(setId);
+                if (mapId != 0)
+                    map = set.Maps.FirstOrDefault(x => x.Id == mapId);
+            }
+            else if (mapId != 0)
+            {
+                set = await Main.Modules.osuApiClient.GetBeatmapsetFromMap_fix(mapId);
+                map = set.Maps.FirstOrDefault(x => x.Id == mapId);
+            }
+            if (set != null)
+                Main.UIManager.beatmapQueue.Enqueue(set, map);
+
+            return (set, map);
+        }
+
+        private bool TryParseBeatmapSetIds(string url, out uint setId, out uint mapId)
         {
             var matches = numberParse.Matches(url);
-            var setId = 0u;
-            var mapId = 0u;
+            setId = mapId = 0u;
             switch (matches.Count)
             {
                 case 1:
@@ -62,21 +121,15 @@ namespace Koapower.KoafishTwitchBot.Module.Message
                     break;
             }
 
-            OsuBeatmapset set = null;
-            OsuBeatmap map = null;
-            if (mapId != 0)
-            {
-                set = await Main.Modules.osuApiClient.GetBeatmapset_fix(setId);
-                map = set.Maps.FirstOrDefault(x => x.Id == mapId);
-            }
-            else if (setId != 0)
-            {
-                set = await Main.Modules.osuApiClient.GetBeatmapset_fix(setId);
-            }
-            if (set != null)
-                Main.UIManager.beatmapQueue.Enqueue(set, map);
+            return setId != 0;
+        }
 
-            return (set, map);
+        private bool TryParseBeatmapMapId(string url, out uint mapId)
+        {
+            var match = numberParse.Match(url);
+            uint.TryParse(match.Value, out mapId);
+
+            return mapId != 0;
         }
     }
 }

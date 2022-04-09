@@ -16,8 +16,8 @@ namespace Koapower.KoafishTwitchBot.Module.OsuWebApi
 
         public void LoadSecret()
         {
-            _clientId = Main.Datas.secret.osu_app_client_id;
-            _clientSecret = Main.Datas.secret.osu_app_client_secret;
+            _clientId = Main.Datas.secret.osu_app_client_id.value;
+            _clientSecret = Main.Datas.secret.osu_app_client_secret.value;
         }
 
         protected override OsuAuthToken GetToken()

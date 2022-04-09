@@ -6,12 +6,15 @@ namespace Koapower.KoafishTwitchBot.Data
     public class Secret
     {
         //twitch bot
-        public string client_id = "";
-        public string client_secret = "";
-        public string bot_access_token = "";
-        public string bot_refresh_token = "";
+        public StringProperty client_id = new StringProperty();
+        public StringProperty client_secret = new StringProperty();
+        public StringProperty bot_access_token = new StringProperty();
+        public StringProperty bot_refresh_token = new StringProperty();
         //osu app
-        public string osu_app_client_id = "";
-        public string osu_app_client_secret = "";
+        public StringProperty osu_app_client_id = new StringProperty();
+        public StringProperty osu_app_client_secret = new StringProperty();
+        //osu irc bot
+        public StringProperty osu_irc_bot_name = new StringProperty();
+        public StringProperty osu_irc_bot_password = new StringProperty();
     }
 }

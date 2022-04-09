@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Koapower.KoafishTwitchBot.Data;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace Koapower.KoafishTwitchBot.UI.InputBox
@@ -46,8 +47,17 @@ namespace Koapower.KoafishTwitchBot.UI.InputBox
         {
             if (request != null)
             {
-                request.stringResult = inputField.text;
-                request.boolResult = toggle.isOn;
+                switch (request.property)
+                {
+                    case StringProperty s:
+                        s.value = inputField.text;
+                        break;
+                    case BoolProperty b:
+                        b.value = toggle.isOn;
+                        break;
+                    default:
+                        break;
+                }
             }
         }
     }

@@ -1,18 +1,19 @@
-﻿namespace Koapower.KoafishTwitchBot.UI.InputBox
+﻿using Koapower.KoafishTwitchBot.Data;
+
+namespace Koapower.KoafishTwitchBot.UI.InputBox
 {
-    public class InputRequest
+    public abstract class InputRequest
     {
-        public InputRequest(string title, ContentType type, bool optional)
+        public InputRequest(Property property, string title, ContentType type, bool optional)
         {
+            this.property = property;
             this.title = title;
             this.type = type;
             this.optional = optional;
         }
+        public Property property;
         public string title;
-        public ContentType type;
+        public readonly ContentType type;
         public bool optional;
-
-        public string stringResult;
-        public bool boolResult;
     }
 }

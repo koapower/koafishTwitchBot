@@ -5,9 +5,10 @@ namespace Koapower.KoafishTwitchBot.Data
     [Serializable]
     public class Settings
     {
-        public string channel_name = "";
-        public string downloadPath = "";
+        public StringProperty channel_name = new StringProperty();
+        public StringProperty osu_ingame_name = new StringProperty();
+        public StringProperty downloadPath = new StringProperty();
 
-        public string commandPrefix = "!";
+        public StringProperty commandPrefix = new StringProperty("!");
     }
 }

@@ -1,6 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
-using Koapower.KoafishTwitchBot.Module;
-using TwitchLib.Client.Models;
+﻿using TwitchLib.Client.Models;
 using TwitchLib.Unity;
 using UnityEngine;
 
@@ -12,9 +10,9 @@ namespace Koapower.KoafishTwitchBot
 
         public void Initialize()
         {
-            ConnectionCredentials credentials = new ConnectionCredentials("koafishbot", Main.Datas.secret.bot_access_token);
+            ConnectionCredentials credentials = new ConnectionCredentials("koafishbot", Main.Datas.secret.bot_access_token.value);
             client = new Client();
-            client.Initialize(credentials, Main.Datas.settings.channel_name);
+            client.Initialize(credentials, Main.Datas.settings.channel_name.value);
 
             //subscribe events here
             client.OnMessageReceived += Main.Modules.messageManager.OnMessageReceived;
@@ -40,7 +38,7 @@ namespace Koapower.KoafishTwitchBot
         {
             if (Input.GetKeyDown(KeyCode.F1))
             {
-                client.SendMessage(Main.Datas.settings.channel_name, "帽子給我好嗎~");
+                client.SendMessage(Main.Datas.settings.channel_name.value, "帽子給我好嗎~");
             }
             else if (Input.GetKeyDown(KeyCode.F2))
             {

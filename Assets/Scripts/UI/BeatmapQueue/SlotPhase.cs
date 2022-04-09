@@ -7,6 +7,7 @@
         WaitForDownload,
         Downloading,
         DownloadFinished,
+        DownloadFailed,
         FileOpened,
         Canceled,
     }

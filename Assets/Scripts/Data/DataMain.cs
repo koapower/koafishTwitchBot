@@ -2,9 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Koapower.KoafishTwitchBot.Data
@@ -14,6 +11,7 @@ namespace Koapower.KoafishTwitchBot.Data
         public static string SaveFolder => Path.Combine(Application.dataPath, "Saves");
         public static string DownloadFolder => Path.Combine(Application.dataPath, "Download");
 
+        public event Action onDataLoaded;
         //todo tables
         public Secret secret = new Secret();
         public Settings settings = new Settings();
@@ -25,58 +23,61 @@ namespace Koapower.KoafishTwitchBot.Data
             //secret
             var path = Path.Combine(SaveFolder, "secrets.json");
             var loadedSecret = Load<Secret>(path);
-            if (loadedSecret == null)
-            {
-                var inputReqs = new List<UI.InputBox.InputRequest>()
-                {
-                    new UI.InputBox.InputRequest("Twitch bot client id", UI.InputBox.ContentType.TextField, false),
-                    new UI.InputBox.InputRequest("Twitch bot client secret", UI.InputBox.ContentType.TextField, false),
-                    new UI.InputBox.InputRequest("Bot access token", UI.InputBox.ContentType.TextField, false),
-                    new UI.InputBox.InputRequest("Bot refresh token", UI.InputBox.ContentType.TextField, false),
-                    new UI.InputBox.InputRequest("Osu app client id", UI.InputBox.ContentType.TextField, false),
-                    new UI.InputBox.InputRequest("Osu app client secret", UI.InputBox.ContentType.TextField, false),
-                };
+            loadedSecret ??= new Secret();
+            var inputReqs = new List<UI.InputBox.InputRequest>();
+            if (string.IsNullOrEmpty(loadedSecret.client_id.value))
+                inputReqs.Add(new UI.InputBox.TextInputRequest(loadedSecret.client_id, "Twitch bot client id", false));
+            if (string.IsNullOrEmpty(loadedSecret.client_secret.value))
+                inputReqs.Add(new UI.InputBox.TextInputRequest(loadedSecret.client_secret, "Twitch bot client secret", false));
+            if (string.IsNullOrEmpty(loadedSecret.bot_access_token.value))
+                inputReqs.Add(new UI.InputBox.TextInputRequest(loadedSecret.bot_access_token, "Bot access token", false));
+            if (string.IsNullOrEmpty(loadedSecret.bot_refresh_token.value))
+                inputReqs.Add(new UI.InputBox.TextInputRequest(loadedSecret.bot_refresh_token, "Bot refresh token", false));
+            if (string.IsNullOrEmpty(loadedSecret.osu_app_client_id.value))
+                inputReqs.Add(new UI.InputBox.TextInputRequest(loadedSecret.osu_app_client_id, "Osu app client id", false));
+            if (string.IsNullOrEmpty(loadedSecret.osu_app_client_secret.value))
+                inputReqs.Add(new UI.InputBox.TextInputRequest(loadedSecret.osu_app_client_secret, "Osu app client secret", false));
+            if (string.IsNullOrEmpty(loadedSecret.osu_irc_bot_name.value))
+                inputReqs.Add(new UI.InputBox.TextInputRequest(loadedSecret.osu_irc_bot_name, "Osu irc bot name", false));
+            if (string.IsNullOrEmpty(loadedSecret.osu_irc_bot_password.value))
+                inputReqs.Add(new UI.InputBox.TextInputRequest(loadedSecret.osu_irc_bot_password, "Osu irc bot password", false));
+            if (inputReqs.Count > 0)
                 await Main.UIManager.OpenInputBoxAsync(UI.InputBox.InputBoxType.OK, "Secrets", inputReqs);
 
-                secret.client_id = inputReqs[0].stringResult;
-                secret.client_secret = inputReqs[1].stringResult;
-                secret.bot_access_token = inputReqs[2].stringResult;
-                secret.bot_refresh_token = inputReqs[3].stringResult;
-                secret.osu_app_client_id = inputReqs[4].stringResult;
-                secret.osu_app_client_secret = inputReqs[5].stringResult;
-
-                Save(secret, path);
-            }
-            else
-                secret = loadedSecret;
+            secret = loadedSecret;
+            Save(secret, path);
 
             //settings
             path = Path.Combine(SaveFolder, "settings.json");
             var loadedSettings = Load<Settings>(path);
             if (loadedSettings != null)
                 settings = loadedSettings;
-            while (string.IsNullOrEmpty(settings.channel_name))
+            while (string.IsNullOrEmpty(settings.channel_name.value) || string.IsNullOrEmpty(settings.osu_ingame_name.value))
             {
-                Debug.LogWarning("Channel name should not be empty! please fill in");
-                var inputReqs = new List<UI.InputBox.InputRequest>()
-                {
-                    new UI.InputBox.InputRequest("Twitch channel name", UI.InputBox.ContentType.TextField, false)
-                };
-                await Main.UIManager.OpenInputBoxAsync(UI.InputBox.InputBoxType.OK, "Twitch Informations", inputReqs);
+                Debug.LogWarning("Both channel name and osu ingame name should not be empty! please fill in");
+                inputReqs.Clear();
+                if (string.IsNullOrEmpty(settings.channel_name.value))
+                    inputReqs.Add(new UI.InputBox.TextInputRequest(settings.channel_name, "Twitch channel name", false));
+                if (string.IsNullOrEmpty(settings.osu_ingame_name.value))
+                    inputReqs.Add(new UI.InputBox.TextInputRequest(settings.osu_ingame_name, "Osu ingame name", false));
 
-                settings.channel_name = inputReqs[0].stringResult;
-                if (string.IsNullOrEmpty(settings.channel_name))
+                await Main.UIManager.OpenInputBoxAsync(UI.InputBox.InputBoxType.OK, "User Settings", inputReqs);
+
+                if (string.IsNullOrEmpty(settings.channel_name.value))
                     await Main.UIManager.OpenMessageBoxAsync(UI.MessageBox.MessageBoxType.OK, $"Twitch channel name is still empty, please fill in.");
-                else
-                    Save(settings, path);
+                if (string.IsNullOrEmpty(settings.osu_ingame_name.value))
+                    await Main.UIManager.OpenMessageBoxAsync(UI.MessageBox.MessageBoxType.OK, $"Osu ingame name is still empty, please fill in.");
+
+                Save(settings, path);
             }
-            if (string.IsNullOrEmpty(settings.downloadPath))
+            if (string.IsNullOrEmpty(settings.downloadPath.value))
             {
-                settings.downloadPath = DownloadFolder;
+                settings.downloadPath.value = DownloadFolder;
                 Save(settings, path);
             }
 
             Debug.Log("Data loaded");
+            onDataLoaded?.Invoke();
         }
 
         public void SaveAll()

@@ -40,5 +40,10 @@ namespace Koapower.KoafishTwitchBot
             var deltaTime = Time.deltaTime;
             client.Update(deltaTime);
         }
+
+        private void OnApplicationQuit()
+        {
+            modules.osuIRCManager.osuIRCClient.StopWork();
+        }
     }
 }

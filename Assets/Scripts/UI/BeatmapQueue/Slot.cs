@@ -37,8 +37,8 @@ namespace Koapower.KoafishTwitchBot.UI.BeatmapQueue
             this.mapQ = Q;
             this.mapset = mapset;
             this.map = map;
-            this.savePath = Path.Combine(Main.Datas.settings.downloadPath, $"{mapset.Id}_autodl.osz");
-
+            this.savePath = Path.Combine(Main.Datas.settings.downloadPath.value, $"{mapset.Id}_autodl.osz");
+            Directory.CreateDirectory(Main.Datas.settings.downloadPath.value);
 
             artist.text = mapset.Artist;
             title.text = mapset.Title;
@@ -89,6 +89,10 @@ namespace Koapower.KoafishTwitchBot.UI.BeatmapQueue
                     OpenDownloadedFile();
                     mapQ.CloseSlot(this);
                     break;
+                case SlotPhase.DownloadFailed:
+                    OpenBeatmapUrl();
+                    mapQ.CloseSlot(this);
+                    break;
                 default:
                     break;
             }
@@ -136,29 +140,49 @@ namespace Koapower.KoafishTwitchBot.UI.BeatmapQueue
             failedFill.gameObject.SetActive(false);
             //官網需要用帳號才能下載，有人是複製自己瀏覽器的cookies去下載，先用鏡像站試試
             var downloadUrl = $"https://beatconnect.io/b/{mapset.Id}";
-            try
+            var dlSuccess = await TryDownload();
+            if (!dlSuccess)
             {
-                using (var wc = new WebClient())
-                {
-                    wc.DownloadProgressChanged += (sender, e) =>
-                    {
-                        //Debug.Log($"Downloading {mapset.Id} {e.ProgressPercentage} {e.BytesReceived}/{e.TotalBytesToReceive}");
-                        progressFill.fillAmount = (float)e.BytesReceived / e.TotalBytesToReceive;
-                    };
-
-                    await wc.DownloadFileTaskAsync(downloadUrl, savePath);
-                }
+                downloadUrl = $"https://api.chimu.moe/v1/download/{mapset.Id}";
+                dlSuccess = await TryDownload();
+            }
+            //能試的下載點都試完之後再決定是否要讓使用者手動開網頁載
+            if (dlSuccess)
+            {
                 phase = SlotPhase.DownloadFinished;
                 progressFill.fillAmount = 0;
                 successFill.gameObject.SetActive(true);
                 Debug.Log($"DownloadFinish {mapset.Id}");
             }
-            catch (Exception e)
+            else
             {
-                Debug.LogError(e);
                 progressFill.fillAmount = 0;
                 failedFill.gameObject.SetActive(true);
-                phase = SlotPhase.WaitForDownload;
+                phase = SlotPhase.DownloadFailed;
+            }
+
+            async UniTask<bool> TryDownload()
+            {
+                try
+                {
+                    using (var wc = new WebClient())
+                    {
+                        wc.DownloadProgressChanged += (sender, e) =>
+                        {
+                            //Debug.Log($"Downloading {mapset.Id} {e.ProgressPercentage} {e.BytesReceived}/{e.TotalBytesToReceive}");
+                            progressFill.fillAmount = (float)e.BytesReceived / e.TotalBytesToReceive;
+                        };
+
+                        await wc.DownloadFileTaskAsync(downloadUrl, savePath);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e);
+                    return false;
+                }
+
+                return true;
             }
         }
 
@@ -168,6 +192,11 @@ namespace Koapower.KoafishTwitchBot.UI.BeatmapQueue
             phase = SlotPhase.FileOpened;
             progressFill.fillAmount = 0;
             Application.OpenURL(savePath);
+        }
+
+        private void OpenBeatmapUrl()
+        {
+            Application.OpenURL($"https://osu.ppy.sh/beatmapsets/{mapset.Id}");
         }
     }
 }
