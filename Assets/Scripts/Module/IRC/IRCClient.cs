@@ -55,7 +55,7 @@ namespace Koapower.KoafishTwitchBot.Module.IRC
                 recieve.Start();
                 send.Start();
 
-                SendPrivateMessage(new IRCMessage(IRCNickname, "Koahi"));
+                SendPrivateMessage(new IRCMessage(IRCNickname, "IRC Client Connected"));
             }
             else
             {

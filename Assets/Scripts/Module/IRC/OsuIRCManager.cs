@@ -1,9 +1,4 @@
 ﻿using Koapower.KoafishTwitchBot.Module.IRC.Message;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Koapower.KoafishTwitchBot.Module.IRC

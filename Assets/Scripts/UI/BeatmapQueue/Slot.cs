@@ -178,7 +178,7 @@ namespace Koapower.KoafishTwitchBot.UI.BeatmapQueue
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError(e);
+                    Debug.LogWarning(e);
                     return false;
                 }
 
