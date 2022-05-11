@@ -13,18 +13,26 @@ namespace Koapower.KoafishTwitchBot.Data
 
         public event Action onDataLoaded;
         //todo tables
-        public Secret secret = new Secret();
+        public Secret secret =
+#if KOAFISHBOT
+            new KoafishBotSecret();
+#else
+            new Secret();
+#endif
         public Settings settings = new Settings();
 
         public async UniTask LoadAll() //todo 這邊的load的流程還可以再調整
         {
             ensureSaveFolderExists();
 
+            string path = null;
+            List<UI.InputBox.InputRequest> inputReqs = new List<UI.InputBox.InputRequest>();
+#if !KOAFISHBOT
             //secret
-            var path = Path.Combine(SaveFolder, "secrets.json");
+            path = Path.Combine(SaveFolder, "secrets.json");
             var loadedSecret = Load<Secret>(path);
             loadedSecret ??= new Secret();
-            var inputReqs = new List<UI.InputBox.InputRequest>();
+            inputReqs.Clear();
             if (string.IsNullOrEmpty(loadedSecret.client_id.value))
                 inputReqs.Add(new UI.InputBox.TextInputRequest(loadedSecret.client_id, "Twitch bot client id", false));
             if (string.IsNullOrEmpty(loadedSecret.client_secret.value))
@@ -46,6 +54,7 @@ namespace Koapower.KoafishTwitchBot.Data
 
             secret = loadedSecret;
             Save(secret, path);
+#endif
 
             //settings
             path = Path.Combine(SaveFolder, "settings.json");
