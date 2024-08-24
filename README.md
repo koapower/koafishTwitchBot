@@ -1,6 +1,6 @@
 # koafishTwitchBot
 koafishBot for twitch usages
-
+Using Unity just for convenience to have UI features.
 made in unity version 2020.3.12f1
 
 ## Features
