@@ -7,6 +7,7 @@ made in unity version 2020.3.12f1
 - Download osu beatmaps from twitch chat automatically
 - !np
 - Sends map request via osu irc
+![Example Usage](https://i.imgur.com/TPsViMl.png)
 
 ## lib used
 * [TwitchLib.Unity](https://github.com/TwitchLib/TwitchLib.Unity)
